@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inference Using the Akaike Information Criterion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .author-info {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .nav-tab {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 15px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .nav-tab:hover {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .chapter {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .chapter.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chapter h2 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .chapter h3 {
+            color: #34495e;
+            font-size: 1.5rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .chapter p {
+            margin-bottom: 15px;
+            text-align: justify;
+            font-size: 1.1rem;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 5px solid #667eea;
+        }
+
+        .key-concept {
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .key-concept h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .timeline {
+            position: relative;
+            margin: 30px 0;
+        }
+
+        .timeline-item {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .timeline-year {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .inference-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .step {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .step:hover {
+            transform: translateY(-5px);
+        }
+
+        .step-number {
+            background: rgba(255, 255, 255, 0.2);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px auto;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .nav-tab {
+                width: 200px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Inference Using the Akaike Information Criterion</h1>
+            <div class="subtitle">A Unified Approach to Statistical Science</div>
+            <div class="author-info">
+                Lucille Eleanor Nguyen • Eastern University • 2022
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showChapter('introduction')">Introduction</button>
+            <button class="nav-tab" onclick="showChapter('background')">Information Theory</button>
+            <button class="nav-tab" onclick="showChapter('philosophy')">Philosophy of Science</button>
+            <button class="nav-tab" onclick="showChapter('models')">Models & Meaning</button>
+            <button class="nav-tab" onclick="showChapter('inference')">Means of Inference</button>
+            <button class="nav-tab" onclick="showChapter('ends')">Ends of Inference</button>
+            <button class="nav-tab" onclick="showChapter('conclusion')">Conclusion</button>
+        </div>
+
+        <div class="content">
+            <div id="introduction" class="chapter active">
+                <h2>Introduction: The Crisis in Statistical Science</h2>
+                
+                <div class="highlight">
+                    <strong>Central Thesis:</strong> The crisis of statistical replication can be addressed by investigating the basis of inference and model-building itself, using the Akaike Information Criterion as a foundation for unified statistical inference.
+                </div>
+
+                <p>Statistical science and its applications face a deep crisis. Methods once considered robust are revealing severe practical weaknesses, contributing to a replication crisis across natural and social sciences. This work proposes that examining the foundations of inference and model-building offers a path forward.</p>
+
+                <h3>The Method of Multiple Working Hypotheses</h3>
+                <p>Thomas Chrowder Chamberlain's 19th-century approach advocates generating multiple, often contradictory potential explanations for any phenomenon under investigation. This method prevents unconscious bias toward a single preferred hypothesis and enables multi-causal analysis.</p>
+
+                <div class="key-concept">
+                    <h4>Strong Inference Framework</h4>
+                    <p>John R. Platt's "Strong Inference" builds on Chamberlain's work, demanding that scientists:</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Derive alternate hypotheses</li>
+                        <li>Run experiments based on those hypotheses</li>
+                        <li>Use results to exclude or refine hypotheses</li>
+                    </ul>
+                </div>
+
+                <h3>The Akaikean Framework</h3>
+                <p>George E.P. Box's famous observation that "all models are wrong, some are useful" guides this approach. The Akaike Information Criterion (AIC) provides a tool for evaluating model utility through predictive accuracy while preventing overfitting through complexity penalties.</p>
+
+                <div class="inference-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <h4>Hypothesizing</h4>
+                        <p>Generate multiple working hypotheses</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <h4>Model-Building</h4>
+                        <p>Translate hypotheses to mathematical models</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <h4>Fitting</h4>
+                        <p>Adjust parameters to data</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <h4>Evaluating</h4>
+                        <p>Measure fit and complexity with AIC</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">5</div>
+                        <h4>Choosing</h4>
+                        <p>Select models using statistical paradigms</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">6</div>
+                        <h4>Concluding</h4>
+                        <p>Interpret results with scientific judgment</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="background" class="chapter">
+                <h2>Information-Theoretic Background</h2>
+                
+                <p>The Akaike Information Criterion emerged from a rich history of information theory, spanning from thermodynamics to cryptography to modern statistical science.</p>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-year">19th Century</div>
+                        <strong>Ludwig Boltzmann & Statistical Mechanics</strong>
+                        <p>Developed entropy as a measure of disorder in physical systems, laying groundwork for information theory.</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-year">1927</div>
+                        <strong>Leo Szilard's Solution to Maxwell's Demon</strong>
+                        <p>Extended Boltzmann's entropy equation to measure information, developing the binary bit as S = k log 2.</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-year">1928</div>
+                        <strong>Ralph Hartley's Information Measure</strong>
+                        <p>Developed H = n log s for telecommunications, focusing on practical transmission problems.</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-year">1940s</div>
+                        <strong>WWII Cryptography Advances</strong>
+                        <p>Alan Turing and Jack Good used information measures for codebreaking at Bletchley Park.</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-year">1948</div>
+                        <strong>Claude Shannon's Information Theory</strong>
+                        <p>Published "A Mathematical Theory of Communication," establishing information entropy H(X) = -Σ P(xi) log P(xi).</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-year">1951</div>
+                        <strong>Kullback-Leibler Divergence</strong>
+                        <p>Solomon Kullback and Richard Leibler developed a measure of distance between statistical distributions.</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-year">1971</div>
+                        <strong>Akaike Information Criterion</strong>
+                        <p>Hirotugu Akaike published AIC = 2k - 2 log L, combining model fit with complexity penalties.</p>
+                    </div>
+                </div>
+
+                <div class="key-concept">
+                    <h4>The AIC Formula</h4>
+                    <p><strong>AIC = 2k - 2 log L</strong></p>
+                    <p>Where k = number of parameters, L = likelihood of the model creating the observed data</p>
+                    <p>This balances model fit (log-likelihood) against complexity (parameter count), implementing Occam's Razor in statistical model selection.</p>
+                </div>
+            </div>
+
+            <div id="philosophy" class="chapter">
+                <h2>Philosophies of Science</h2>
+                
+                <p>Understanding how to interpret AIC requires grappling with fundamental questions about the nature and purpose of science itself.</p>
+
+                <div class="key-concept">
+                    <h4>Four Major Philosophical Positions</h4>
+                    
+                    <h5>1. Realism</h5>
+                    <p>Science discovers truths about the world. Quantitative tools provide evidence toward the truth of statements or functionally good explanations.</p>
+                    
+                    <h5>2. Empiricism</h5>
+                    <p>Truth is unattainable. Science aims for adequacy in explaining observable phenomena, tested through experiment and analysis.</p>
+                    
+                    <h5>3. Instrumentalism</h5>
+                    <p>Science generates good predictions. Value comes from predictive accuracy and conceptual advancement, not truth claims.</p>
+                    
+                    <h5>4. Anarchism (Feyerabend)</h5>
+                    <p>No single method defines science. Progress requires skepticism toward all guidelines and paradigms.</p>
+                </div>
+
+                <h3>Paradigms and Revolutions</h3>
+                <p>Thomas Kuhn's "Structure of Scientific Revolutions" describes science as alternating between normal activity within paradigms and revolutionary shifts. Karl Popper countered that scientists should actively seek to falsify accepted theories.</p>
+
+                <div class="highlight">
+                    <strong>Elliott Sober's Synthesis:</strong> Evaluate models first on instrumental predictability, then assess fitted models through realist truth evaluation. This approach informs the AIC framework proposed in this thesis.
+                </div>
+
+                <h3>AIC and Philosophical Frameworks</h3>
+                <p>The Akaike Information Criterion can be viewed as instrumentalist (seeking good prediction models), but it can be used within various philosophical frameworks. The key insight is that statistical tools themselves need not be tied to single philosophies.</p>
+            </div>
+
+            <div id="models" class="chapter">
+                <h2>Models and Meaning</h2>
+                
+                <p>Moving from philosophical abstraction to practical application requires understanding how scientific hypotheses become mathematical models.</p>
+
+                <h3>From Subject Matter to Statistical Models</h3>
+                <div class="highlight">
+                    <strong>David Cox:</strong> "The translation from subject-matter problem to statistical model is... often the most critical part of an analysis."
+                </div>
+
+                <p>This translation involves professional judgment and field-specific expertise. Researchers must convert verbal descriptions and domain terminology into formal mathematical representations.</p>
+
+                <h3>The Challenge of Uncertainty</h3>
+                <p>Models must represent fundamental uncertainty. Different approaches include:</p>
+                
+                <div class="key-concept">
+                    <h4>Approaches to Modeling Uncertainty</h4>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>Precise Probability:</strong> Traditional statistical models with point estimates</li>
+                        <li><strong>Interval Approaches:</strong> Dempster-Shafer evidence theory</li>
+                        <li><strong>Fuzzy Sets:</strong> Non-binary membership functions</li>
+                        <li><strong>Imprecise Probability:</strong> Sets of probability distributions</li>
+                    </ul>
+                </div>
+
+                <h3>Realism vs. Instrumentalism in Modeling</h3>
+                <p>Two contrasting approaches emerge:</p>
+                
+                <p><strong>Milton Friedman (Instrumentalist):</strong> Model assumptions need not be true if predictions are accurate. Focus on outputs, not premises.</p>
+                
+                <p><strong>Herbert Simon (Realist):</strong> Models must follow from empirically valid composition laws. Premises and their connections must be true.</p>
+
+                <div class="highlight">
+                    <strong>Synthesis:</strong> Use both approaches - evaluate models on fit to data (instrumentalist), then assess fitted models on parameter realism. AIC serves as the measure for instrumental quality.
+                </div>
+            </div>
+
+            <div id="inference" class="chapter">
+                <h2>Means of Inference</h2>
+                
+                <p>Statistical inference fundamentally deals with uncertainty and unknowns. The choice of statistical paradigm shapes how we interpret evidence and reach conclusions.</p>
+
+                <h3>The Nature of Uncertainty</h3>
+                <p>Different statistical schools offer distinct answers to fundamental questions about uncertainty:</p>
+
+                <div class="inference-steps">
+                    <div class="step">
+                        <h4>Bayesian</h4>
+                        <p>Uncertainty reflects subjective beliefs. Procedures provide support for/against hypotheses based on prior knowledge.</p>
+                    </div>
+                    <div class="step">
+                        <h4>Frequentist</h4>
+                        <p>Uncertainty emerges from long-run sampling. Validity comes from repeated random sampling from populations.</p>
+                    </div>
+                    <div class="step">
+                        <h4>Likelihoodist</h4>
+                        <p>Focus on likelihood functions. Information relevant to models is contained in the likelihood.</p>
+                    </div>
+                    <div class="step">
+                        <h4>Information-Theoretic</h4>
+                        <p>Use AIC and similar criteria to fit the best, most concise curve to data.</p>
+                    </div>
+                </div>
+
+                <h3>The Inference Process</h3>
+                <p>Inference proceeds through interconnected steps:</p>
+
+                <div class="key-concept">
+                    <h4>Six Steps of Statistical Inference</h4>
+                    <ol style="margin-left: 20px;">
+                        <li><strong>Hypothesizing:</strong> Develop theories using multiple working hypotheses</li>
+                        <li><strong>Model-building:</strong> Translate theories into mathematics</li>
+                        <li><strong>Fitting:</strong> Adjust parameters to data</li>
+                        <li><strong>Evaluating:</strong> Measure fit and complexity with AIC</li>
+                        <li><strong>Choosing:</strong> Apply statistical paradigms as "inference engines"</li>
+                        <li><strong>Concluding:</strong> Interpret mathematical results in subject-specific terms</li>
+                    </ol>
+                </div>
+
+                <h3>Engines of Inference</h3>
+                <p>Statistical paradigms function like engines - taking models as inputs and producing interpretable outputs. Just as mechanical engines combine simple machines into complex systems, statistical inference combines basic calculations into comprehensive analytical frameworks.</p>
+
+                <div class="highlight">
+                    <strong>Epistemic Humility:</strong> Rather than declaring one paradigm superior, researchers should select methods based on the problem at hand. As Kristin Lennox noted: "I was raised a frequentist... when frequentist inference can't do something I want to do, I go Bayesian."
+                </div>
+            </div>
+
+            <div id="ends" class="chapter">
+                <h2>Ends of Inference</h2>
+                
+                <p>Moving from statistical models to scientific conclusions requires bridging the gap between mathematical results and domain-specific meaning.</p>
+
+                <h3>The Translation Challenge</h3>
+                <p>Consider a botanist studying water temperature and grass growth. After collecting data and finding that 72°F ± 1°F optimizes growth with 95% confidence, what does this mean scientifically? The mathematical result must be interpreted within botanical knowledge and practical constraints.</p>
+
+                <h3>Historical Foundations</h3>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <strong>Pascal & Cardano (17th Century)</strong>
+                        <p>Developed probability for gambling - if a game ends early, how should winnings be distributed based on chances of victory?</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <strong>Thomas Bayes (18th Century)</strong>
+                        <p>Created inverse probability for updating beliefs about unobserved events based on new evidence.</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <strong>Ronald Fisher (20th Century)</strong>
+                        <p>Developed "objective" significance testing, contrasting with "subjective" Bayesian approaches.</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <strong>Neyman-Pearson</strong>
+                        <p>Advocated choosing among multiple hypotheses using likelihood ratios rather than testing against null hypotheses.</p>
+                    </div>
+                </div>
+
+                <h3>The Statistics Wars</h3>
+                <p>Despite appearing as a simple Bayesian vs. Frequentist dichotomy, statistical inference involves multiple competing paradigms:</p>
+
+                <div class="key-concept">
+                    <h4>Major Statistical Paradigms</h4>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>Bayesian:</strong> Update beliefs using prior information and new evidence</li>
+                        <li><strong>Frequentist:</strong> Test hypotheses against null using long-run sampling properties</li>
+                        <li><strong>Likelihoodist:</strong> Base inference on likelihood functions alone</li>
+                        <li><strong>Hybrid approaches:</strong> Combine elements from multiple paradigms</li>
+                    </ul>
+                </div>
+
+                <div class="highlight">
+                    <strong>Practical Reality:</strong> Most practitioners use whatever methods work for their specific problems, rather than adhering strictly to single paradigms. The choice often depends more on training institution than philosophical conviction.
+                </div>
+
+                <h3>Moving Beyond Statistical Wars</h3>
+                <p>This thesis advocates using AIC for model evaluation while remaining agnostic about inference paradigms. Researchers should:</p>
+                
+                <ol style="margin-left: 20px;">
+                    <li>Use multiple working hypotheses</li>
+                    <li>Evaluate models with AIC</li>
+                    <li>Select inference engines based on problem requirements</li>
+                    <li>Judge results on logical justification and plausibility</li>
+                </ol>
+
+                <p>The final step - from model selection to scientific conclusions - requires creativity, judgment, and plausibility assessments that cannot be fully systematized.</p>
+            </div>
+
+            <div id="conclusion" class="chapter">
+                <h2>Conclusion: A Unified Approach</h2>
+                
+                <div class="highlight">
+                    <strong>Core Proposal:</strong> A systematic process using multiple working hypotheses for model-building, AIC for model evaluation, and paradigm agnosticism for model selection and conclusion.
+                </div>
+
+                <h3>The Akaikean Framework</h3>
+                <p>This approach is philosophically Akaikean (evaluating models on fit and complexity) but not methodologically restrictive (using only AIC-type statistics). The crisis in inferential statistics is procedural, not fundamental to the tools themselves.</p>
+
+                <h3>Beyond Statistical Rituals</h3>
+                <p>As Gerd Gigerenzer argues, we must move beyond "statistical rituals" toward genuine acts of judgment, creativity, and plausible reasoning. Statistical science requires logical reasoning that cannot be judged by any single paradigm alone.</p>
+
+                <div class="key-concept">
+                    <h4>Key Principles</h4>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>Epistemic Humility:</strong> Recognize that this is one approach among many</li>
+                        <li><strong>Creative Judgment:</strong> Emphasize researcher creativity in hypothesizing, testing, and concluding</li>
+                        <li><strong>Plausible Reasoning:</strong> Judge inferences on logical appropriateness, not paradigm purity</li>
+                        <li><strong>Systematic Process:</strong> Follow structured steps while maintaining flexibility</li>
+                    </ul>
+                </div>
+
+                <h3>The Role of Creativity</h3>
+                <p>Hirotugu Akaike advocated for plausibility "for the evaluation of verbally defined models." The translation from hypothesis to statistical modeling is creative, as is the movement from model selection to inferential conclusions.</p>
+
+                <div class="highlight">
+                    <strong>Akaike's Vision:</strong> "Statistical thinking as the science of creative thinking" - establishing inference as fundamentally requiring human judgment and creativity at every step.
+                </div>
+
+                <h3>Future Directions</h3>
+                <p>This framework applies beyond traditional statistics to machine learning, bridging computational pattern recognition with robust statistical inference. While not claiming to solve the problem of inference entirely, it offers a practical, unified approach to scientific reasoning under uncertainty.</p>
+
+                <p>The method provides a foundation for empirical sciences while acknowledging the irreducible role of human judgment in moving from evidence to conclusions. In Issac Newton's spirit of "standing on the shoulders of giants," this work builds on centuries of developments in probability, information theory, and philosophy of science.</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2022 Lucille Eleanor Nguyen | Eastern University | Interactive thesis presentation</p>
+            <p><a href="https://drive.google.com/file/d/1OBxwxTEU47cu7VT3giXmdEszY3Ct6F7r/view?usp=sharing" target="_blank" style="color: #fff; text-decoration: underline;">Thesis available here</a></p>
+        </div>
+    </div>
+
+    <script>
+        function showChapter(chapterId) {
+            // Hide all chapters
+            const chapters = document.querySelectorAll('.chapter');
+            chapters.forEach(chapter => {
+                chapter.classList.remove('active');
+            });
+
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected chapter
+            document.getElementById(chapterId).classList.add('active');
+
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+
+            // Smooth scroll to top of content
+            document.querySelector('.content').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        }
+
+        // Add smooth hover effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const steps = document.querySelectorAll('.step');
+            steps.forEach(step => {
+                step.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px) scale(1.02)';
+                });
+                
+                step.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

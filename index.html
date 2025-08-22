@@ -59,36 +59,44 @@
             margin-top: 20px;
         }
 
-        .nav-tabs {
+        .nav-container {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 30px;
             justify-content: center;
+            margin-bottom: 30px;
         }
 
-        .nav-tab {
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
+        .chapter-select {
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #667eea;
             padding: 15px 25px;
             border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            font-size: 1.1rem;
             font-weight: 600;
             color: #2c3e50;
+            cursor: pointer;
+            min-width: 300px;
+            text-align: center;
+            outline: none;
+            transition: all 0.3s ease;
         }
 
-        .nav-tab:hover {
+        .chapter-select:hover {
             background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
         }
 
-        .nav-tab.active {
+        .chapter-select:focus {
             background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .chapter-select option {
+            background: white;
+            color: #2c3e50;
+            padding: 10px;
         }
 
         .content {
@@ -247,14 +255,16 @@
             </div>
         </div>
 
-        <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showChapter('introduction')">Introduction</button>
-            <button class="nav-tab" onclick="showChapter('background')">Information Theory</button>
-            <button class="nav-tab" onclick="showChapter('philosophy')">Philosophy of Science</button>
-            <button class="nav-tab" onclick="showChapter('models')">Models & Meaning</button>
-            <button class="nav-tab" onclick="showChapter('inference')">Means of Inference</button>
-            <button class="nav-tab" onclick="showChapter('ends')">Ends of Inference</button>
-            <button class="nav-tab" onclick="showChapter('conclusion')">Conclusion</button>
+        <div class="nav-container">
+            <select class="chapter-select" onchange="showChapter(this.value)">
+                <option value="introduction">Introduction: The Crisis in Statistical Science</option>
+                <option value="background">Information-Theoretic Background</option>
+                <option value="philosophy">Philosophies of Science</option>
+                <option value="models">Models and Meaning</option>
+                <option value="inference">Means of Inference</option>
+                <option value="ends">Ends of Inference</option>
+                <option value="conclusion">Conclusion</option>
+            </select>
         </div>
 
         <div class="content">
@@ -594,17 +604,8 @@
                 chapter.classList.remove('active');
             });
 
-            // Remove active class from all tabs
-            const tabs = document.querySelectorAll('.nav-tab');
-            tabs.forEach(tab => {
-                tab.classList.remove('active');
-            });
-
             // Show selected chapter
             document.getElementById(chapterId).classList.add('active');
-
-            // Add active class to clicked tab
-            event.target.classList.add('active');
 
             // Smooth scroll to top of content
             document.querySelector('.content').scrollIntoView({ 
